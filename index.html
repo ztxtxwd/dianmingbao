@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+		<!--message plugin-->
+		<script src="js/hullabaloo.min.js"></script>
+		<link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+		<!-- sheet2json js-xlsx -->
+		<script src="js/xlsx.core.min.js"></script>
+		<!-- Custom CSS -->
+		<link href="css/style.css" rel="stylesheet">
+		<!-- font CSS-->
+		<link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/5.8.1/css/all.min.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
+		 crossorigin="anonymous">
+	</head>
+	<body id="page-top">
+		<!-- Navigation -->
+		<a class="menu-toggle rounded" href="#" onclick="$.hulla.send('支持xlsx/xls/txt文件, 快把文件拖进来试试吧!', 'info')">
+			<i class="fas fa-info"></i>
+		</a>
+		<a class="share rounded " href="javascript:handleCopy()" onclick="$.hulla.send('已复制网址至剪贴板', 'success')">
+			<i class="fas fa-share"></i>
+		</a>
+		<a class="github rounded trigger-default" href="https://github.com/ztxtxwd/dianmingbao">
+			<i class="fab fa-github"></i>
+		</a>
+
+		<!-- Header -->
+		<header class="masthead d-flex">
+			<div class="container text-center my-auto">
+				<h1 class="mb-1" id=namen>谷大狗</h1>
+				<h3 class="mb-5">
+					<em></em>
+				</h3>
+				<a id="btn" class="btn btn-primary btn-xl js-scroll-trigger" href="javascript:sos()">开始</a>
+			</div>
+			<div class="overlay">
+				<p id="demo"></p>
+			</div>
+		</header>
+	</body>
+
+
+	<script type="application/javascript">
+		<!--阻止浏览器打开文件-->
+		$(function() {
+			
+			$.hulla = new hullabaloo();
+
+			setTimeout(function() {
+				
+				$.hulla.send("Hi，欢迎使用点名宝！", "success");
+				
+			}, 1000);
+			if (!localStorage.getItem("hasImpoted")) {
+
+
+
+
+				setTimeout(function() {
+					if (!localStorage.getItem("hasImported")) {
+						$.hulla.send("您还没有导入姓名，把文件拖进来试试吧！", "warning");
+					}
+
+				}, 2000);
+			}
+
+			//阻止浏览器默认行。 
+			$(document).on({
+				dragleave: function(e) { //拖离 
+					e.preventDefault();
+				},
+				drop: function(e) { //拖后放 
+					e.preventDefault();
+				},
+				dragenter: function(e) { //拖进 
+					e.preventDefault();
+				},
+				dragover: function(e) { //拖来拖去 
+					e.preventDefault();
+				}
+			});
+			var box = document.getElementById('page-top'); //拖拽区域 
+			box.addEventListener("drop", function(e) {
+				e.preventDefault(); //取消默认浏览器拖拽效果 
+				$("body").fadeOut("fast");
+				$("body").fadeIn("fast");
+				var fileList = e.dataTransfer.files; //获取文件对象 
+				//检测是否是拖拽文件到页面的操作 
+				if (fileList.length == 0) {
+					return false;
+				}
+				var fileType = fileList[0].type;
+				//检测文件是不是xlsx、xls、txt 
+				if (!(fileType.indexOf('sheet') > -1 || fileType.indexOf('excel') > -1 || fileType.indexOf('plain') > -1)) {
+					setTimeout(function() {
+						$.hulla.send("不支持的文件类型，换个文件试试", "danger");
+					}, 1000);
+
+					return false;
+				}
+
+				if (fileType.indexOf('plain') === -1) {
+					var wb; //读取完成的数据
+					var rABS = false; //是否将文件读取为二进制字符串 
+					var reader = new FileReader();
+
+					reader.onload = function(e) {
+						var data = e.target.result;
+
+						if (rABS) {
+							wb = XLSX.read(btoa(fixdata(data)), { //手动转化
+								type: 'base64'
+							});
+						} else {
+							wb = XLSX.read(data, {
+								type: 'binary'
+							});
+						}
+						//wb.SheetNames[0]是获取Sheets中第一个Sheet的名字
+						//wb.Sheets[Sheet名]获取第一个Sheet的数据
+						var o = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])
+						var str = JSON.stringify(o);
+						var namesJson = JSON.parse(str);
+						var arr = [];
+						if (str === '[]') {
+							setTimeout(function() {
+								$.hulla.send("文件中没有数据", "danger");
+							}, 1000);
+							return false;
+						}
+						//匹配姓名列
+						if (namesJson[0]['姓名'] != null) {
+							field = '姓名';
+						} else if (namesJson[0]['用户名'] != null) {
+							field = '用户名';
+						} else {
+							setTimeout(function() {
+								$.hulla.send("未找到姓名列,数据可能不对哦！", "warning");
+							}, 1000);
+							field = getFirstAttr(namesJson[0]);
+							arr.push(field);
+						}
+
+						//将找到的数据加入localStorage
+						for (var i = 0; i < namesJson.length; i++) {
+							arr.push(namesJson[i][field]);
+						}
+						if (arr.length == 0) {
+							setTimeout(function() {
+								$.hulla.send("未找到姓名列", "danger");
+							}, 1000);
+						}
+						localStorage.setItem('names', arr);
+						localStorage.setItem("hasImported", true);
+
+					};
+					if (rABS) {
+						reader.readAsArrayBuffer(fileList[0]);
+					} else {
+						reader.readAsBinaryString(fileList[0]);
+					}
+
+				} else if (fileType.indexOf('plain') > -1) {
+					var txt;
+					var reader1 = new FileReader();
+					var reader2 = new FileReader();
+					reader1.onload = function(e) {
+						if (isCorrectType(this.result)) {
+							txtToArray(this.result);
+						}
+					}
+					reader2.onload = function(e) {
+						if (isCorrectType(this.result)) {
+							txtToArray(this.result);
+						}
+					}
+					reader1.readAsText(fileList[0], "GBK");
+					reader2.readAsText(fileList[0]);
+				}
+
+
+			}, false);
+		});
+
+		//utf8orgbk
+		function isCorrectType(s) {
+			var lastnames = new Array("张", "王", "李", "刘", "陈", "杨", "黄", "赵", "吴", "周");
+			for (var i = 0; i < lastnames.length; i++) {
+				if (s.indexOf(lastnames[i]) > -1) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function getFirstAttr(json) {
+			for (var k in json) {
+				return k;
+			}
+		}
+
+		function txtToArray(t) {
+			if (t.indexOf("\r\n") === -1) {
+				localStorage.setItem("names", t.split(" "));
+			} else {
+				localStorage.setItem("names", t.split("\r\n"));
+			}
+			localStorage.setItem("hasImported", true);
+		}
+		var started = false;
+
+		function sos() {
+			if (started) {
+				clearInterval(clock);
+				var d = new Date();
+				document.getElementById("namen").innerHTML = n[d.getMilliseconds() * 101 % n.length];
+				document.getElementById("btn").innerHTML = "开始";
+				started = false;
+
+			} else {
+
+				document.getElementById("btn").innerHTML = "停止";
+				started = true;
+
+				var nameExample=["谷大狗","张三","李四","王五","赵六"]
+				if(localStorage.getItem('names')==null){
+					n=nameExample;
+				}else{
+					n = localStorage.getItem('names').toString().split(",");
+				}
+				clock = setInterval(function() {
+					i++;
+					var inde = rand(i, n.length - 1);
+
+					document.getElementById("namen").innerHTML = n[inde];
+
+				}, 50); //设置每100毫秒实行一次
+			}
+		}
+
+		var i = 0;
+
+		function rand(m, n) {
+			//return Math.floor(Math.random()*(n-m+1)+m);
+			if (m > n) {
+				i = 0;
+				return 0;
+			} else {
+				return m;
+			}
+		}
+
+		function fixdata(data) { //文件流转BinaryString
+			var o = "",
+				l = 0,
+				w = 10240;
+			for (; l < data.byteLength / w; ++l) o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w, l * w +
+				w)));
+			o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w)));
+			return o;
+		}
+
+
+		//复制网址至剪贴板
+		function handleCopy() {
+			const copyVaule = 'http://www.dianming.online'
+
+			// 创建'虚拟'DOM
+			const input = document.createElement('input')
+			document.body.appendChild(input)
+			input.setAttribute('value', copyVaule)
+			input.select()
+			if (document.execCommand('copy')) {
+				document.execCommand('copy')
+
+			}
+			// 删除'虚拟'DOM
+			document.body.removeChild(input)
+
+		}
+	</script>
+</html>
