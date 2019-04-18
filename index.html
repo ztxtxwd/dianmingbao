@@ -14,6 +14,19 @@
 		<!-- font CSS-->
 		<link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/5.8.1/css/all.min.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
 		 crossorigin="anonymous">
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-138595352-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+
+			function gtag() {
+				dataLayer.push(arguments);
+			}
+			gtag('js', new Date());
+
+			gtag('config', 'UA-138595352-1');
+		</script>
+
 	</head>
 	<body id="page-top">
 		<!-- Navigation -->
@@ -46,13 +59,13 @@
 	<script type="application/javascript">
 		<!--阻止浏览器打开文件-->
 		$(function() {
-			
+
 			$.hulla = new hullabaloo();
 
 			setTimeout(function() {
-				
+
 				$.hulla.send("Hi，欢迎使用点名宝！", "success");
-				
+
 			}, 1000);
 			if (!localStorage.getItem("hasImpoted")) {
 
@@ -165,28 +178,28 @@
 
 				} else if (fileType.indexOf('plain') > -1) {
 					var txt;
-					var isGbk=false;
-					var isUtf8=false;
+					var isGbk = false;
+					var isUtf8 = false;
 					var reader1 = new FileReader();
 					var reader2 = new FileReader();
 					reader1.onload = function(e) {
 						if (isCorrectType(this.result)) {
 							txtToArray(this.result);
-							isGbk=true;
+							isGbk = true;
 							return;
 						}
-						
+
 					}
 					reader2.onload = function(e) {
 						if (isCorrectType(this.result)) {
 							txtToArray(this.result);
-							isUtf8=true;
+							isUtf8 = true;
 							return;
 						}
-						
+
 					}
-					reader2.onloadend=function(e){
-						if(isGbk==false&&isUtf8==false){
+					reader2.onloadend = function(e) {
+						if (isGbk == false && isUtf8 == false) {
 							setTimeout(function() {
 								$.hulla.send("未找到合适的数据，用表格文件试试吧", "warning");
 							}, 1000);
@@ -194,8 +207,8 @@
 					}
 					reader1.readAsText(fileList[0], "GBK");
 					reader2.readAsText(fileList[0]);
-					
-					
+
+
 				}
 
 
@@ -222,15 +235,15 @@
 		function txtToArray(t) {
 			if (t.indexOf("\r\n") > -1) {
 				localStorage.setItem("names", t.split("\r\n"));
-			} else if(t.indexOf("\n")>-1){
+			} else if (t.indexOf("\n") > -1) {
 				localStorage.setItem("names", t.split("\n"));
-			}else if(t.indexOf("\r")>-1){
+			} else if (t.indexOf("\r") > -1) {
 				localStorage.setItem("names", t.split("\r"));
-			}else if(t.indexOf("，")>-1){
+			} else if (t.indexOf("，") > -1) {
 				localStorage.setItem("names", t.split("，"));
-			}else if(t.indexOf(",")>-1){
+			} else if (t.indexOf(",") > -1) {
 				localStorage.setItem("names", t.split(","));
-			}else{
+			} else {
 				localStorage.setItem("names", t.split(" "));
 			}
 			localStorage.setItem("hasImported", true);
@@ -250,10 +263,10 @@
 				document.getElementById("btn").innerHTML = "停止";
 				started = true;
 
-				var nameExample=["谷大狗","张三","李四","王五","赵六"]
-				if(localStorage.getItem('names')==null){
-					n=nameExample;
-				}else{
+				var nameExample = ["谷大狗", "张三", "李四", "王五", "赵六"]
+				if (localStorage.getItem('names') == null) {
+					n = nameExample;
+				} else {
 					n = localStorage.getItem('names').toString().split(",");
 				}
 				clock = setInterval(function() {
