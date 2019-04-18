@@ -165,20 +165,37 @@
 
 				} else if (fileType.indexOf('plain') > -1) {
 					var txt;
+					var isGbk=false;
+					var isUtf8=false;
 					var reader1 = new FileReader();
 					var reader2 = new FileReader();
 					reader1.onload = function(e) {
 						if (isCorrectType(this.result)) {
 							txtToArray(this.result);
+							isGbk=true;
+							return;
 						}
+						
 					}
 					reader2.onload = function(e) {
 						if (isCorrectType(this.result)) {
 							txtToArray(this.result);
+							isUtf8=true;
+							return;
+						}
+						
+					}
+					reader2.onloadend=function(e){
+						if(isGbk==false&&isUtf8==false){
+							setTimeout(function() {
+								$.hulla.send("未找到合适的数据，用表格文件试试吧", "warning");
+							}, 1000);
 						}
 					}
 					reader1.readAsText(fileList[0], "GBK");
 					reader2.readAsText(fileList[0]);
+					
+					
 				}
 
 
@@ -203,10 +220,18 @@
 		}
 
 		function txtToArray(t) {
-			if (t.indexOf("\r\n") === -1) {
-				localStorage.setItem("names", t.split(" "));
-			} else {
+			if (t.indexOf("\r\n") > -1) {
 				localStorage.setItem("names", t.split("\r\n"));
+			} else if(t.indexOf("\n")>-1){
+				localStorage.setItem("names", t.split("\n"));
+			}else if(t.indexOf("\r")>-1){
+				localStorage.setItem("names", t.split("\r"));
+			}else if(t.indexOf("，")>-1){
+				localStorage.setItem("names", t.split("，"));
+			}else if(t.indexOf(",")>-1){
+				localStorage.setItem("names", t.split(","));
+			}else{
+				localStorage.setItem("names", t.split(" "));
 			}
 			localStorage.setItem("hasImported", true);
 		}
